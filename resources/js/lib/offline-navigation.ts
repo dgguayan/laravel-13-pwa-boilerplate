@@ -1,26 +1,38 @@
 import type { InertiaLinkProps } from '@inertiajs/react';
 import { router } from '@inertiajs/react';
+import type { ComponentType } from 'react';
 import { toUrl } from '@/lib/utils';
+import Dashboard from '@/pages/dashboard';
+import TasksIndex from '@/pages/tasks/index';
 import { dashboard } from '@/routes';
 import { index as tasksIndex } from '@/routes/tasks';
 
 type OfflineRoute = {
     component: string;
+    page: ComponentType;
     url: string;
 };
 
 const offlineRoutes: OfflineRoute[] = [
     {
         component: 'dashboard',
+        page: Dashboard,
         url: dashboard.url(),
     },
     {
         component: 'tasks/index',
+        page: TasksIndex,
         url: tasksIndex.url(),
     },
 ];
 
 export const offlineRouteUrls = offlineRoutes.map((route) => route.url);
+
+export async function preloadOfflineRouteComponents(): Promise<void> {
+    await Promise.all(
+        offlineRoutes.map((route) => Promise.resolve(route.page)),
+    );
+}
 
 function normalizeUrl(url: string): string | null {
     const baseUrl =

@@ -1,6 +1,9 @@
 import { useEffect } from 'react';
 import { useOnlineStatus } from '@/hooks/use-online-status';
-import { offlineRouteUrls } from '@/lib/offline-navigation';
+import {
+    offlineRouteUrls,
+    preloadOfflineRouteComponents,
+} from '@/lib/offline-navigation';
 import { warmOfflinePages } from '@/services/pwaService';
 
 export function OfflineRouteCache() {
@@ -13,6 +16,7 @@ export function OfflineRouteCache() {
 
         const controller = new AbortController();
 
+        void preloadOfflineRouteComponents();
         void warmOfflinePages(offlineRouteUrls, controller.signal);
 
         return () => controller.abort();
