@@ -53,6 +53,8 @@ function statusVariant(
 
 type TaskItemProps = {
     task: Task;
+    canUpdate: boolean;
+    canDelete: boolean;
     onUpdate: (
         id: string,
         changes: Partial<Pick<Task, 'title' | 'description' | 'completed'>>,
@@ -64,6 +66,8 @@ type TaskItemProps = {
 
 function TaskItem({
     task,
+    canUpdate,
+    canDelete,
     onUpdate,
     onDelete,
     onKeepLocal,
@@ -132,6 +136,7 @@ function TaskItem({
                             aria-label={`Mark ${task.title} ${task.completed ? 'incomplete' : 'complete'}`}
                             checked={task.completed}
                             className="mt-1"
+                            disabled={!canUpdate}
                             onCheckedChange={(checked) =>
                                 void onUpdate(task.id, {
                                     completed: checked === true,
@@ -165,22 +170,26 @@ function TaskItem({
                             )}
                         </div>
                         <div className="flex shrink-0 gap-1">
-                            <Button
-                                aria-label={`Edit ${task.title}`}
-                                onClick={beginEditing}
-                                size="icon"
-                                variant="ghost"
-                            >
-                                <Pencil />
-                            </Button>
-                            <Button
-                                aria-label={`Delete ${task.title}`}
-                                onClick={() => void onDelete(task.id)}
-                                size="icon"
-                                variant="ghost"
-                            >
-                                <Trash2 />
-                            </Button>
+                            {canUpdate && (
+                                <Button
+                                    aria-label={`Edit ${task.title}`}
+                                    onClick={beginEditing}
+                                    size="icon"
+                                    variant="ghost"
+                                >
+                                    <Pencil />
+                                </Button>
+                            )}
+                            {canDelete && (
+                                <Button
+                                    aria-label={`Delete ${task.title}`}
+                                    onClick={() => void onDelete(task.id)}
+                                    size="icon"
+                                    variant="ghost"
+                                >
+                                    <Trash2 />
+                                </Button>
+                            )}
                         </div>
                     </div>
                 )}
@@ -202,6 +211,7 @@ function TaskItem({
                             {task.sync_status === 'conflict' && (
                                 <div className="mt-2 flex flex-wrap gap-2">
                                     <Button
+                                        disabled={!canUpdate}
                                         onClick={() =>
                                             void onKeepLocal(task.id)
                                         }
@@ -231,6 +241,9 @@ function TaskItem({
 
 export default function TasksIndex() {
     const { auth } = usePage().props;
+    const canCreate = auth.permissions.includes('create.tasks');
+    const canUpdate = auth.permissions.includes('update.tasks');
+    const canDelete = auth.permissions.includes('delete.tasks');
     const repository = useMemo(
         () => new TaskRepository(auth.user.id),
         [auth.user.id],
@@ -423,40 +436,42 @@ export default function TasksIndex() {
                     </p>
                 )}
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Create a task</CardTitle>
-                        <CardDescription>
-                            This form works without a network connection.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form className="space-y-3" onSubmit={createTask}>
-                            <Input
-                                maxLength={255}
-                                onChange={(event) =>
-                                    setTitle(event.target.value)
-                                }
-                                placeholder="What needs to be done?"
-                                required
-                                value={title}
-                            />
-                            <textarea
-                                className="min-h-24 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                                maxLength={2000}
-                                onChange={(event) =>
-                                    setDescription(event.target.value)
-                                }
-                                placeholder="Description (optional)"
-                                value={description}
-                            />
-                            <Button type="submit">
-                                <Plus />
-                                Save locally
-                            </Button>
-                        </form>
-                    </CardContent>
-                </Card>
+                {canCreate && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Create a task</CardTitle>
+                            <CardDescription>
+                                This form works without a network connection.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <form className="space-y-3" onSubmit={createTask}>
+                                <Input
+                                    maxLength={255}
+                                    onChange={(event) =>
+                                        setTitle(event.target.value)
+                                    }
+                                    placeholder="What needs to be done?"
+                                    required
+                                    value={title}
+                                />
+                                <textarea
+                                    className="min-h-24 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                                    maxLength={2000}
+                                    onChange={(event) =>
+                                        setDescription(event.target.value)
+                                    }
+                                    placeholder="Description (optional)"
+                                    value={description}
+                                />
+                                <Button type="submit">
+                                    <Plus />
+                                    Save locally
+                                </Button>
+                            </form>
+                        </CardContent>
+                    </Card>
+                )}
 
                 <section
                     className="space-y-3"
@@ -482,6 +497,8 @@ export default function TasksIndex() {
                         tasks.map((task) => (
                             <TaskItem
                                 key={task.id}
+                                canDelete={canDelete}
+                                canUpdate={canUpdate}
                                 onDelete={deleteTask}
                                 onKeepLocal={keepLocalConflict}
                                 onUpdate={updateTask}

@@ -7,8 +7,17 @@ export type BreadcrumbItem = {
 };
 
 export type NavItem = {
+    key?: string;
     title: string;
     href: NonNullable<InertiaLinkProps['href']>;
     icon?: LucideIcon | null;
     isActive?: boolean;
+    permission?: string;
+};
+
+export type AuthorizedNavigationItem = {
+    key: string;
+    title: string;
+    href: string;
+    permission: string;
 };

@@ -2,11 +2,16 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
+use App\Services\BrandingService;
+use App\Support\PermissionRegistry;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
+    public function __construct(private readonly BrandingService $branding) {}
+
     /**
      * The root template that's loaded on the first page visit.
      *
@@ -35,12 +40,20 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        /** @var User|null $user */
+        $user = $request->user();
+        $branding = $this->branding->publicSettings();
+
         return [
             ...parent::share($request),
-            'name' => config('app.name'),
+            'name' => $branding['appName'],
+            'branding' => $branding,
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user,
+                'roles' => $user?->getRoleNames()->sort()->values()->all() ?? [],
+                'permissions' => $user?->getAllPermissions()->pluck('name')->sort()->values()->all() ?? [],
             ],
+            'navigation' => $user === null ? [] : PermissionRegistry::navigationFor($user),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

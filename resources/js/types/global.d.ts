@@ -1,4 +1,6 @@
 import type { Auth } from '@/types/auth';
+import type { Branding } from '@/types/branding';
+import type { AuthorizedNavigationItem } from '@/types/navigation';
 
 declare module 'react' {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -12,6 +14,8 @@ declare module '@inertiajs/core' {
         sharedPageProps: {
             name: string;
             auth: Auth;
+            branding: Branding;
+            navigation: AuthorizedNavigationItem[];
             sidebarOpen: boolean;
             [key: string]: unknown;
         };

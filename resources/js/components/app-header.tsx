@@ -1,7 +1,17 @@
 import { usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-react';
+import {
+    BookOpen,
+    CheckSquare2,
+    Folder,
+    LayoutGrid,
+    Menu,
+    Search,
+    Settings,
+    ShieldCheck,
+    Users,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
-import AppLogoIcon from '@/components/app-logo-icon';
+import { BrandMark } from '@/components/brand-mark';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { OfflineLink } from '@/components/offline-link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -33,20 +43,20 @@ import { UserMenuContent } from '@/components/user-menu-content';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
 import { cn, toUrl } from '@/lib/utils';
-import { dashboard } from '@/routes';
+import { edit as editProfile } from '@/routes/profile';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
 type Props = {
     breadcrumbs?: BreadcrumbItem[];
 };
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-];
+const navigationIcons = {
+    dashboard: LayoutGrid,
+    roles: ShieldCheck,
+    settings: Settings,
+    tasks: CheckSquare2,
+    users: Users,
+};
 
 const rightNavItems: NavItem[] = [
     {
@@ -66,7 +76,12 @@ const activeItemStyles =
 
 export function AppHeader({ breadcrumbs = [] }: Props) {
     const page = usePage();
-    const { auth } = page.props;
+    const { auth, navigation } = page.props;
+    const mainNavItems: NavItem[] = navigation.map((item) => ({
+        ...item,
+        icon: navigationIcons[item.key as keyof typeof navigationIcons],
+    }));
+    const homeHref = mainNavItems[0]?.href ?? editProfile();
     const getInitials = useInitials();
     const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
 
@@ -94,7 +109,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                     Navigation menu
                                 </SheetTitle>
                                 <SheetHeader className="flex justify-start text-left">
-                                    <AppLogoIcon className="h-6 w-6 fill-current text-black dark:text-white" />
+                                    <BrandMark className="h-6 w-6 text-black dark:text-white" />
                                 </SheetHeader>
                                 <div className="flex h-full flex-1 flex-col space-y-4 p-4">
                                     <div className="flex h-full flex-col justify-between text-sm">
@@ -136,7 +151,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                     </div>
 
                     <OfflineLink
-                        href={dashboard()}
+                        href={homeHref}
                         prefetch
                         className="flex items-center space-x-2"
                     >

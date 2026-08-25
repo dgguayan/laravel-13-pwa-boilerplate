@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\Task;
 use App\Models\User;
+use App\Permission;
 
 class TaskPolicy
 {
@@ -12,7 +13,7 @@ class TaskPolicy
      */
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->can(Permission::ViewTasks->value);
     }
 
     /**
@@ -20,7 +21,7 @@ class TaskPolicy
      */
     public function view(User $user, Task $task): bool
     {
-        return $user->is($task->user);
+        return $user->can(Permission::ViewTasks->value) && $user->is($task->user);
     }
 
     /**
@@ -28,7 +29,7 @@ class TaskPolicy
      */
     public function create(User $user): bool
     {
-        return true;
+        return $user->can(Permission::CreateTasks->value);
     }
 
     /**
@@ -36,7 +37,7 @@ class TaskPolicy
      */
     public function update(User $user, Task $task): bool
     {
-        return $user->is($task->user);
+        return $user->can(Permission::UpdateTasks->value) && $user->is($task->user);
     }
 
     /**
@@ -44,7 +45,7 @@ class TaskPolicy
      */
     public function delete(User $user, Task $task): bool
     {
-        return $user->is($task->user);
+        return $user->can(Permission::DeleteTasks->value) && $user->is($task->user);
     }
 
     /**
@@ -52,7 +53,7 @@ class TaskPolicy
      */
     public function restore(User $user, Task $task): bool
     {
-        return $user->is($task->user);
+        return $user->can(Permission::DeleteTasks->value) && $user->is($task->user);
     }
 
     /**

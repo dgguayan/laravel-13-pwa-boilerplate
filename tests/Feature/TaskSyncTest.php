@@ -2,6 +2,8 @@
 
 use App\Models\Task;
 use App\Models\User;
+use App\SystemRole;
+use Database\Seeders\AuthorizationSeeder;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -21,6 +23,18 @@ function taskSyncOperation(array $overrides = []): array
     ], $overrides);
 }
 
+function taskAuthorizedUser(): User
+{
+    $user = User::factory()->create();
+    $user->assignRole(SystemRole::Member->value);
+
+    return $user;
+}
+
+beforeEach(function () {
+    $this->seed(AuthorizationSeeder::class);
+});
+
 test('guests cannot access the tasks page or synchronization endpoints', function () {
     $this->get(route('tasks.index'))->assertRedirect(route('login'));
     $this->getJson(route('tasks.sync.show'))->assertUnauthorized();
@@ -30,7 +44,7 @@ test('guests cannot access the tasks page or synchronization endpoints', functio
 });
 
 test('authenticated users can visit the offline tasks page', function () {
-    $user = User::factory()->create();
+    $user = taskAuthorizedUser();
 
     $this->actingAs($user)
         ->get(route('tasks.index'))
@@ -39,7 +53,7 @@ test('authenticated users can visit the offline tasks page', function () {
 });
 
 test('pull synchronization returns only the authenticated users tasks and tombstones', function () {
-    $user = User::factory()->create();
+    $user = taskAuthorizedUser();
     $activeTask = Task::factory()->for($user)->create();
     $deletedTask = Task::factory()->for($user)->create();
     $deletedTask->delete();
@@ -56,7 +70,7 @@ test('pull synchronization returns only the authenticated users tasks and tombst
 });
 
 test('a client UUID task is created for the authenticated user at server version one', function () {
-    $user = User::factory()->create();
+    $user = taskAuthorizedUser();
     $operation = taskSyncOperation(['version' => 999]);
 
     $this->actingAs($user)
@@ -75,7 +89,7 @@ test('a client UUID task is created for the authenticated user at server version
 });
 
 test('untrusted synchronization fields and invalid UUIDs are rejected', function () {
-    $user = User::factory()->create();
+    $user = taskAuthorizedUser();
     $operation = taskSyncOperation([
         'id' => 'not-a-uuid',
         'user_id' => User::factory()->create()->id,
@@ -88,7 +102,7 @@ test('untrusted synchronization fields and invalid UUIDs are rejected', function
 });
 
 test('a matching version update increments the authoritative version', function () {
-    $user = User::factory()->create();
+    $user = taskAuthorizedUser();
     $task = Task::factory()->for($user)->create(['version' => 3]);
     $operation = taskSyncOperation([
         'id' => $task->id,
@@ -111,7 +125,7 @@ test('a matching version update increments the authoritative version', function 
 });
 
 test('a stale update returns a conflict without overwriting the server', function () {
-    $user = User::factory()->create();
+    $user = taskAuthorizedUser();
     $task = Task::factory()->for($user)->create([
         'title' => 'Server title',
         'version' => 4,
@@ -138,7 +152,7 @@ test('a stale update returns a conflict without overwriting the server', functio
 });
 
 test('a matching delete creates a versioned server tombstone', function () {
-    $user = User::factory()->create();
+    $user = taskAuthorizedUser();
     $task = Task::factory()->for($user)->create(['version' => 2]);
     $operation = taskSyncOperation([
         'id' => $task->id,
@@ -164,7 +178,7 @@ test('a matching delete creates a versioned server tombstone', function () {
 });
 
 test('a user cannot modify another users task', function () {
-    $user = User::factory()->create();
+    $user = taskAuthorizedUser();
     $otherTask = Task::factory()->for(User::factory())->create([
         'title' => 'Protected task',
         'version' => 1,

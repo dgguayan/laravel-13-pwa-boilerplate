@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\Admin\BrandingController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
+use App\Permission;
 use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Support\Facades\Route;
 
@@ -23,7 +25,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('throttle:6,1')
         ->name('user-password.update');
 
-    Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
+    Route::get('settings/appearance', [BrandingController::class, 'edit'])
+        ->name('appearance.edit');
+    Route::post('settings/appearance/branding', [BrandingController::class, 'update'])
+        ->middleware('can:'.Permission::ManageBranding->value)
+        ->name('appearance.branding.update');
+    Route::delete('settings/appearance/branding', [BrandingController::class, 'destroy'])
+        ->middleware('can:'.Permission::ManageBranding->value)
+        ->name('appearance.branding.destroy');
 });
 
 Route::get('.well-known/passkey-endpoints', function () {

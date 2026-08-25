@@ -1,9 +1,17 @@
 import { Head } from '@inertiajs/react';
 import AppearanceTabs from '@/components/appearance-tabs';
+import { BrandingSettings } from '@/components/branding-settings';
 import Heading from '@/components/heading';
 import { edit as editAppearance } from '@/routes/appearance';
+import type { Branding } from '@/types';
 
-export default function Appearance() {
+export default function Appearance({
+    currentBranding,
+    canManageBranding,
+}: {
+    currentBranding: Branding;
+    canManageBranding: boolean;
+}) {
     return (
         <>
             <Head title="Appearance settings" />
@@ -18,6 +26,10 @@ export default function Appearance() {
                 />
                 <AppearanceTabs />
             </div>
+
+            {canManageBranding && (
+                <BrandingSettings currentBranding={currentBranding} />
+            )}
         </>
     );
 }
